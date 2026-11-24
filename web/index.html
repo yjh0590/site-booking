@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>콕콕 예약알림</title>
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon.png">
+<link rel="icon" href="/icon.png">
+<meta name="theme-color" content="#FFD45C">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap">
+<style>
+  :root {
+    --bg: #FFF6E9; --card: #FFFFFF; --ink: #4A3B32; --soft: #8C7B6E;
+    --chick: #FFD45C; --coral: #FF8A5B; --coral-dark: #F06E3E; --mint: #CFF3E3; --mint-ink: #1F7A57;
+    --line: #F3E3CF; --chip: #FFF1DD; --shadow: 0 6px 0 #F3E3CF;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #2B2420; --card: #3A312B; --ink: #FFF1E3; --soft: #CDBBAA; --line: #4C4038;
+      --chip: #4A3E35; --mint: #24493A; --mint-ink: #9EE8C6; --shadow: 0 6px 0 #1F1A17; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.6 "Gowun Dodum", system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
+  main { max-width: 480px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1, h2, button, .chip, .status { font-family: "Jua", "Gowun Dodum", sans-serif; font-weight: 400; }
+  header { text-align: center; margin-bottom: 20px; }
+  header svg { width: 120px; height: 120px; animation: bob 2.4s ease-in-out infinite; }
+  @keyframes bob { 50% { transform: translateY(-6px) rotate(-3deg); } }
+  h1 { font-size: 30px; margin: 4px 0 0; }
+  header p { margin: 2px 0 0; color: var(--soft); }
+  .card { background: var(--card); border: 2px solid var(--line); border-radius: 24px;
+    padding: 20px; margin-bottom: 16px; box-shadow: var(--shadow); }
+  h2 { font-size: 21px; margin: 0 0 12px; }
+  label { display: block; font-size: 14px; color: var(--soft); margin: 12px 0 4px; }
+  input[type=text], input[type=url] { width: 100%; padding: 12px 14px; font: inherit; color: var(--ink);
+    background: var(--bg); border: 2px solid var(--line); border-radius: 14px; outline: none; }
+  input:focus { border-color: var(--chick); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { position: relative; }
+  .chip input { position: absolute; opacity: 0; }
+  .chip span { display: inline-block; padding: 8px 14px; border-radius: 999px; background: var(--chip);
+    border: 2px solid transparent; cursor: pointer; font-size: 15px; }
+  .chip input:checked + span { background: var(--chick); color: #4A3B32; border-color: #F2B92E; }
+  .chip input:focus-visible + span { outline: 3px solid var(--coral); }
+  button { font-size: 18px; border: 0; border-radius: 16px; padding: 13px 18px; cursor: pointer;
+    background: var(--coral); color: #fff; box-shadow: 0 4px 0 var(--coral-dark); width: 100%; margin-top: 16px; }
+  button:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--coral-dark); }
+  button:disabled { opacity: .6; }
+  button.ghost { background: var(--chip); color: var(--ink); box-shadow: none; font-size: 15px; padding: 10px; }
+  .hint { font-size: 14px; color: var(--soft); margin: 8px 0 0; }
+  ul { list-style: none; padding: 0; margin: 0; }
+  li { display: flex; gap: 12px; align-items: center; padding: 14px 0; border-top: 2px dashed var(--line); }
+  li:first-child { border-top: 0; padding-top: 0; }
+  li .info { flex: 1; min-width: 0; }
+  li b { display: block; font-size: 17px; }
+  li a { color: var(--soft); font-size: 13px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .status { display: inline-block; font-size: 13px; padding: 2px 10px; border-radius: 999px; background: var(--chip); margin-top: 4px; }
+  .status.open { background: var(--mint); color: var(--mint-ink); }
+  .del { width: 40px; height: 40px; margin: 0; padding: 0; border-radius: 12px; background: var(--chip);
+    color: var(--soft); box-shadow: none; font-size: 18px; flex: none; }
+  .empty { text-align: center; color: var(--soft); padding: 8px 0; }
+  .toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 120px); max-width: calc(100% - 32px);
+    background: var(--ink); color: var(--bg); padding: 12px 18px; border-radius: 16px; transition: transform .3s; z-index: 9; }
+  .toast.show { transform: translate(-50%, 0); }
+  .status.err { background: #FFE1DC; color: #B3402A; }
+  .when { font-size: 12px; color: var(--soft); margin-left: 6px; }
+  details { margin-top: 0; }
+  summary { font-family: "Jua", sans-serif; font-size: 19px; cursor: pointer; list-style: none; }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: " ▾"; color: var(--soft); }
+  details[open] summary::after { content: " ▴"; }
+  details ol { padding-left: 20px; margin: 10px 0 0; }
+  details li { display: list-item; border: 0; padding: 4px 0; }
+  details h3 { font-family: "Jua", sans-serif; font-weight: 400; font-size: 16px; margin: 14px 0 2px; }
+  details p { margin: 4px 0; }
+  .eg { background: var(--chip); border-radius: 10px; padding: 1px 8px; font-size: 14px; }
+  footer { text-align: center; font-size: 13px; color: var(--soft); margin-top: 24px; }
+  footer a { color: inherit; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <svg viewBox="0 0 120 120" aria-hidden="true">
+      <circle cx="54" cy="22" r="7" fill="#FFD45C"/><circle cx="64" cy="20" r="6" fill="#FFD45C"/>
+      <circle cx="60" cy="66" r="40" fill="#FFD45C"/>
+      <ellipse cx="38" cy="73" rx="7" ry="5" fill="#FF9E9E" opacity=".7"/>
+      <ellipse cx="82" cy="73" rx="7" ry="5" fill="#FF9E9E" opacity=".7"/>
+      <circle cx="47" cy="60" r="4.5" fill="#4A3B32"/><circle cx="73" cy="60" r="4.5" fill="#4A3B32"/>
+      <circle cx="48.5" cy="58.5" r="1.5" fill="#fff"/><circle cx="74.5" cy="58.5" r="1.5" fill="#fff"/>
+      <path d="M54 68 L66 68 L60 77 Z" fill="#FF8A5B"/>
+    </svg>
+    <h1>콕콕 예약알림</h1>
+    <p>예약 열리면 콕콕이가 바로 콕! 찔러드려요</p>
+  </header>
+
+  <section class="card" id="step-ios" hidden>
+    <h2>📱 아이폰은 한 단계만 더!</h2>
+    <p>Safari 아래쪽 <b>공유 버튼 → 홈 화면에 추가</b>를 누르고,<br>홈 화면에 생긴 콕콕이를 눌러서 다시 열어 주세요.</p>
+  </section>
+
+  <section class="card" id="step-unsupported" hidden>
+    <h2>😢 이 브라우저는 알림을 못 받아요</h2>
+    <p>크롬, 엣지, 삼성 인터넷이나 아이폰 Safari(홈 화면에 추가)로 열어 주세요.</p>
+  </section>
+
+  <section class="card" id="step-on" hidden>
+    <h2>🔔 먼저 알림을 켜 주세요</h2>
+    <p>알림을 허용해야 예약이 열렸을 때 바로 알려드릴 수 있어요.</p>
+    <label for="f-code">초대 코드</label>
+    <input id="f-code" type="text" autocomplete="off" autocapitalize="off" placeholder="받은 코드를 넣어 주세요">
+    <button id="btn-on">알림 켜기</button>
+  </section>
+
+  <div id="step-main" hidden>
+    <section class="card">
+      <h2>🐣 지켜볼 사이트 등록</h2>
+      <form id="form">
+        <label for="f-name">이름 (나만 보여요)</label>
+        <input id="f-name" type="text" maxlength="40" placeholder="예: 포켓몬 화석 박물관">
+        <label for="f-url">사이트 주소</label>
+        <input id="f-url" type="url" required placeholder="https://...">
+        <label>언제 알려드릴까요?</label>
+        <div class="chips" role="radiogroup">
+          <label class="chip"><input type="radio" name="mode" value="gone" checked><span>이 글자가 사라지면</span></label>
+          <label class="chip"><input type="radio" name="mode" value="appear"><span>이 글자가 생기면</span></label>
+          <label class="chip"><input type="radio" name="mode" value="change"><span>뭐든 바뀌면</span></label>
+        </div>
+        <div id="kw-box">
+          <label for="f-kw">글자</label>
+          <input id="f-kw" type="text" maxlength="50" placeholder="예: 접수예정">
+          <p class="hint" id="kw-hint">지금 페이지에 있는 '접수예정' 같은 글자가 없어지면 알려드려요.</p>
+        </div>
+        <button type="submit" id="btn-add">콕콕이한테 맡기기</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>👀 지켜보는 중</h2>
+      <ul id="list"></ul>
+      <button class="ghost" id="btn-test">테스트 알림 받아보기</button>
+    </section>
+  </div>
+
+  <section class="card">
+    <details id="help">
+      <summary>📖 사용법 &amp; 꿀팁</summary>
+      <h3>1. 이렇게 써요</h3>
+      <ol>
+        <li>예약 페이지 주소를 복사해서 붙여 넣어요.</li>
+        <li>언제 알려줄지 고르고 <b>글자</b>를 넣어요.</li>
+        <li>'콕콕이한테 맡기기'를 누르면 끝! 주기적으로 대신 확인해요.</li>
+      </ol>
+      <h3>2. 어떤 글자를 넣을까요?</h3>
+      <p>예약 페이지를 열어서 <b>지금 보이는 상태 글자</b>를 찾아보세요.</p>
+      <p>· 지금 <span class="eg">접수예정</span> <span class="eg">준비중</span> <span class="eg">매진</span>이 보이면<br>
+         → <b>이 글자가 사라지면</b> + 그 글자 (제일 확실해요!)</p>
+      <p>· 열리면 <span class="eg">예약하기</span> <span class="eg">신청하기</span> 버튼이 생길 걸 안다면<br>
+         → <b>이 글자가 생기면</b> + 그 글자</p>
+      <p>· 잘 모르겠으면 → <b>뭐든 바뀌면</b> (공지 하나만 바뀌어도 알림이 올 수 있어요)</p>
+      <h3>3. 알림이 안 와요</h3>
+      <p>· <b>테스트 알림 받아보기</b>로 먼저 확인해 보세요.</p>
+      <p>· 휴대폰 설정에서 이 앱(브라우저)의 알림이 켜져 있는지, 방해금지 모드가 아닌지 확인해요.</p>
+      <p>· 아이폰은 꼭 <b>홈 화면에 추가</b>한 아이콘으로 열어야 해요.</p>
+      <p>· 콕콕이를 실행한 컴퓨터가 꺼지면 확인도 멈춰요.</p>
+      <h3>4. ⚠️ 표시가 떠요</h3>
+      <p>사이트에 접속하지 못했다는 뜻이에요. 잠깐 그럴 수 있으니 계속되면 주소를 확인해 주세요.
+         화면을 나중에 그리는 일부 예매 사이트는 감지가 어려울 수 있어요. 그럴 땐 공지사항 페이지를 등록해 보세요.</p>
+    </details>
+  </section>
+
+  <footer>🐣 콕콕 예약알림 · <a href="https://oddz.click" target="_blank" rel="noopener">oddz.click</a></footer>
+</main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+let endpoint = null;
+
+const HINTS = {
+  gone: ["예: 접수예정", "지금 페이지에 있는 '접수예정' 같은 글자가 없어지면 알려드려요."],
+  appear: ["예: 예약하기", "페이지에 '예약하기' 같은 글자가 새로 나타나면 알려드려요."],
+};
+
+function toast(msg) {
+  const t = $("#toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => t.classList.remove("show"), 3500);
+}
+
+function show(id) {
+  for (const s of ["#step-ios", "#step-unsupported", "#step-on", "#step-main"]) $(s).hidden = s !== id;
+}
+
+async function api(path, body = {}) {
+  const r = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ endpoint, ...body }) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || "앗, 문제가 생겼어요");
+  return j;
+}
+
+function b64(s) {
+  const raw = atob((s + "=".repeat((4 - s.length % 4) % 4)).replace(/-/g, "+").replace(/_/g, "/"));
+  return Uint8Array.from(raw, (c) => c.charCodeAt(0));
+}
+
+async function ready(sub) {
+  endpoint = sub.endpoint;
+  await api("/api/subscribe", { sub: sub.toJSON(), code: $("#f-code").value });
+  show("#step-main");
+  load();
+}
+
+async function init() {
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+    return show(ios && !standalone ? "#step-ios" : "#step-unsupported");
+  }
+  $("#f-code").value = new URLSearchParams(location.search).get("code") || "";
+  const reg = await navigator.serviceWorker.register("/sw.js");
+  const sub = await reg.pushManager.getSubscription();
+  show("#step-on");
+  if (sub && Notification.permission === "granted") await ready(sub).catch(() => {});  // 등록된 기기면 바로 통과
+}
+
+$("#btn-on").onclick = async (e) => {
+  e.target.disabled = true;
+  try {
+    if (!$("#f-code").value.trim()) throw new Error("초대 코드를 먼저 넣어 주세요 🔒");
+    if (await Notification.requestPermission() !== "granted") {
+      throw new Error("알림을 허용해야 콕 찔러드릴 수 있어요 🥺");
+    }
+    const reg = await navigator.serviceWorker.ready;
+    const { key } = await (await fetch("/api/key")).json();
+    const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64(key) });
+    await ready(sub);
+    toast("알림 준비 완료! 🐣");
+  } catch (err) {
+    toast(err.message);
+  } finally {
+    e.target.disabled = false;
+  }
+};
+
+for (const r of document.querySelectorAll("input[name=mode]")) {
+  r.onchange = () => {
+    const m = r.value;
+    $("#kw-box").hidden = m === "change";
+    $("#f-kw").required = m !== "change";
+    if (HINTS[m]) [$("#f-kw").placeholder, $("#kw-hint").textContent] = HINTS[m];
+  };
+}
+$("#f-kw").required = true;
+
+$("#form").onsubmit = async (e) => {
+  e.preventDefault();
+  const mode = document.querySelector("input[name=mode]:checked").value;
+  const kw = $("#f-kw").value.trim();
+  const btn = $("#btn-add");
+  btn.disabled = true;
+  btn.textContent = "사이트 살펴보는 중…";
+  try {
+    const r = await api("/api/add", {
+      name: $("#f-name").value, url: $("#f-url").value,
+      keyword: mode === "change" ? "" : (mode === "gone" ? "!" : "") + kw,
+    });
+    e.target.reset();
+    $("#kw-box").hidden = false;
+    toast(r.note);
+    load();
+  } catch (err) {
+    toast(err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "콕콕이한테 맡기기";
+  }
+};
+
+function describe(kw) {
+  if (!kw) return "뭐든 바뀌면 알림";
+  return kw.startsWith("!") ? `'${kw.slice(1)}' 사라지면 알림` : `'${kw}' 생기면 알림`;
+}
+
+function ago(sec) {
+  if (sec < 60) return "방금 확인";
+  if (sec < 3600) return `${Math.floor(sec / 60)}분 전 확인`;
+  if (sec < 86400) return `${Math.floor(sec / 3600)}시간 전 확인`;
+  return `${Math.floor(sec / 86400)}일 전 확인`;
+}
+
+async function load() {
+  const res = await api("/api/list").catch((e) => (toast(e.message), { items: [] }));
+  const items = res.items;
+  const list = $("#list");
+  clearTimeout(load.timer);
+  load.timer = setTimeout(load, 60_000);  // 열어 둔 동안 1분마다 새로고침
+  if (!items.length) $("#help").open = true;
+  list.replaceChildren();
+  if (!items.length) {
+    const li = document.createElement("li");
+    li.className = "empty";
+    li.textContent = "아직 등록한 사이트가 없어요. 위에서 하나 넣어 볼까요?";
+    return list.append(li);
+  }
+  for (const w of items) {
+    const li = document.createElement("li");
+    const info = document.createElement("div");
+    info.className = "info";
+    const b = document.createElement("b");
+    b.textContent = w.name;
+    const a = document.createElement("a");
+    a.href = w.url; a.target = "_blank"; a.rel = "noopener"; a.textContent = w.url;
+    const st = document.createElement("span");
+    st.className = "status" + (w.opened ? " open" : w.error ? " err" : "");
+    st.textContent = w.opened ? "🎉 열렸어요!" : w.error ? "⚠️ 접속 실패" : `⏳ ${describe(w.keyword)}`;
+    if (w.error) st.title = w.error;
+    const when = document.createElement("span");
+    when.className = "when";
+    when.textContent = w.checked ? ago(res.now - w.checked) : "";
+    info.append(b, a, st, when);
+    const del = document.createElement("button");
+    del.className = "del";
+    del.textContent = "✕";
+    del.setAttribute("aria-label", `${w.name} 삭제`);
+    del.onclick = async () => {
+      if (!confirm(`'${w.name}' 그만 지켜볼까요?`)) return;
+      await api("/api/delete", { id: w.id }).catch((e) => toast(e.message));
+      load();
+    };
+    li.append(info, del);
+    list.append(li);
+  }
+}
+
+$("#btn-test").onclick = () => api("/api/test").then(() => toast("알림 보냈어요! 확인해 보세요 📬"), (e) => toast(e.message));
+
+init().catch((e) => toast(e.message));
+</script>
+</body>
+</html>

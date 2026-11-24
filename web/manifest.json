@@ -1,0 +1,9 @@
+{
+  "name": "콕콕 예약알림",
+  "short_name": "콕콕",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFF6E9",
+  "theme_color": "#FFD45C",
+  "icons": [{ "src": "/icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }]
+}

@@ -1,0 +1,7 @@
+# 한 줄에 하나: URL [키워드]
+#   키워드    → 키워드가 나타나면 알림
+#   !키워드   → 키워드가 사라지면 알림
+#   (비움)    → 페이지가 바뀌면 알림
+
+# 국립광주과학관 포켓몬 화석 박물관: 상태가 '접수예정'에서 바뀌면 알림
+https://www.sciencecenter.or.kr/kor/ex/index.do?mode=view&menuId=17_25&exSpSEQ=396&sp=sp !접수예정
