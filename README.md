@@ -88,8 +88,15 @@ cloudflared 설치: https://developers.cloudflare.com/cloudflare-one/connections
 ## 6. 24시간 돌리고 싶다면
 
 - **가장 쉬움**: 컴퓨터 절전 모드 끄기 (설정 → 시스템 → 전원 → 절전 "안 함")
-- **컴퓨터를 끄고 싶다면**: Oracle Cloud 무료 VM 같은 클라우드 서버에서 같은 방법으로 실행하세요.
-  고정 주소가 필요하면 cloudflared의 이름 있는 터널(named tunnel)을 쓰면 돼요.
+- **컴퓨터를 끄고 싶다면**: Oracle Cloud 무료 VM 같은 리눅스(Ubuntu) 서버에 올리고 `setup.sh`를 실행하세요.
+  필요한 것 설치, 자동 실행(재부팅해도 다시 켜짐)까지 한 번에 해 줘요.
+  ```bash
+  bash setup.sh                      # 임시 주소 (journalctl -u kokkok | grep trycloudflare 로 확인)
+  bash setup.sh kokkok.내도메인.com   # 고정 주소 + HTTPS 자동 발급
+  ```
+  고정 주소를 쓰려면 먼저 ① 도메인 DNS에 A 레코드(→ 서버 IP)를 추가하고
+  ② 클라우드 방화벽(Oracle은 Security List)에서 TCP 80·443 수신을 열어 두세요.
+  기존 데이터를 옮기려면 `vapid.pem`, `invite.txt`, `booking.db`를 같은 폴더에 같이 복사하면 돼요.
 
 ## 7. 자주 묻는 질문
 
@@ -120,6 +127,7 @@ cloudflared 설치: https://developers.cloudflare.com/cloudflare-one/connections
 
 ```
 start.bat          Windows 실행 (더블클릭)
+setup.sh           리눅스 서버 설치 (24시간 운영용)
 server.py          콕콕이 본체 (웹 서버 + 주기적 확인 + 알림 발송)
 watch.py           페이지 비교 로직 (단독 실행도 가능: python watch.py)
 web/               화면 (index.html), 알림 처리(sw.js), 아이콘
